@@ -213,9 +213,97 @@ gapminder%>% #start with gapminder
   filter(year==1987|year ==2007) %>% #just work woth data from 1987 and 2007
   group_by(year) %>%  #year
   arrange(desc(lifeExp)) %>% #sort data by life expectancy (by year)
-  top_n(10) %>% #get just the top ten (by year)
+  slice(1:100)%>% #get just the top ten (by year)
   group_by(country) %>%  #country
   summarise(country_life_exp=n()) %>%  #count the number of times a country appears (if appers 2 times then these are in both lists)
   filter(country_life_exp ==2)%>% #filter on countries with a count of 2
-  write_csv("results/top10_life_exp_1987_and_2007") #write results to csv
- 
+  write_csv("results/top10_life_exp_1987_and_2007") #write results to 
+
+
+library(tidyverse) # calls library
+
+#class challenge day 5
+gapminder <- read_csv("data/gapminder.csv") # store gapminder data in a variable
+gapminder%>% # calls gapminder
+  filter(year==1957)%>% # filter to year 1957
+  group_by(continent)%>% #groups by continent
+  summarise(max_gdpPercap = max(gdpPercap)) #return maximum gdp per continent
+
+#combining data
+gapminder_2012 <- read_csv(file="data/gapminder_2012.csv") # read in gapminder_2012 dataset and assign to a variable
+
+combined_gapminder <-bind_rows(gapminder,gapminder_2012) # joins gapminder and gapminder_2012 and assigns to combined_gapminder
+
+rename_2012 <- rename(gapminder_2012,population=pop) # rename pop to popualtion 
+mismatched_names <- bind_rows(gapminder, rename_2012) #bind gapminder and renamed with population col
+mismatched_names # this results in a col added called population (as well as the pop col) this will have missing data for all years prior to 2012. the pop col will contain data from other years. 
+
+#joins lesson
+example_vector <- c(1,4,2,7) #shows a numeric vector 
+example_vector
+
+string_vector <- c('hello','this','is','a','vector') #assigns a string vector
+string_vector
+
+example_vector[3] # vectors have order (which is not neccesarily numberical or alphabetical) and should only have a single type of data in them
+broken_vector<- c('hello', 2)
+broken_vector # this should not work but r has converted the 2 into a string
+
+df1<-tibble(sample=c(1,2,3),measure1=c(4.2,5.3,6.1)) #create a dataframe and assign to df1
+df1
+
+df2<-tibble(sample=c(1,3,4),measure2=c(7.8,6.4,9.0)) #create a dataframe and assign to df2
+df2
+
+inner_join(df1,df2) #conduct an inner join output is a 2x3 dataframe joins occur by cols with the same name
+full_join(df1,df2) #conduct a full join output is a 4x3 dataframe
+left_join(df1,df2) #conduct a left join output is a 3x3 dataframe
+
+#make join using col with different names example
+df3<- tibble(ID=c(1,2,4),measure3=c(4.7,34,2.6))
+df3
+
+full_join(df1,df3) # this will not work because there is no common col name this is fixed using "by" see row 267
+full_join(df1,df3, by=c("sample"="ID")) 
+full_join(df1,df2,by=c("sample")) # this shows explicity what 
+full_join(df1,df3, by=c("sample"="ID","measure1"="measure3")) # the syntax is a little strange but is important because if data mismatches occur then rows are appended but is useful when there are mulitple cols between dataframes are shared
+
+gapminder_sr<-read_csv("data/gapminder_sex_ratios.csv")
+gapminder_sr
+gapminder
+
+inner_join(gapminder,gapminder_sr) #join occurs by country & year The output from full_join has the most rows, because it is keeping all the rows from both dataframes. inner_join is only including those rows that match. and has the least rows. The left_join output will depend on which data frame was provided first and has the same number of rows as that data frame.
+full_join(gapminder,gapminder_sr)
+left_join(gapminder,gapminder_sr)
+
+#reshaping data
+cows<- tibble(ID=c(1,2,3), #create the cows dataframe and assign cows
+              weight1=c(203,227,193),
+              weight2=c(365,344,329))
+cows
+cows_tidy<-gather(cows,rep,weight,-ID) #gather rows into columns and assign variable you can rearrange these to improve the readability of the data for example arrange by ID.  
+cows_tidy%>%
+  arrange(ID)
+
+spread(cows_tidy,rep,weight)# this spreads the cows_tidy tibble and makes it look the same as the cows tibble. This would also be considered untidy data
+
+#gather
+table4a # calls table 4 a data
+tidy_table4a<-gather(table4a,year,value,-country)%>% #uses gather function to rearrange the table to give 6x3 tidy data frame from 3x 3 untidy data frame
+  arrange(country) #arranges table by country
+tidy_table4a
+
+#spread
+spread(tidy_table4a,year,value) #uses spread function to spread cols to rows i.e. an untidy format. 
+
+#spread
+table2 #cols country, year, type and count
+spread(table2,type,count)#spreads table2 by type and count
+spread(table2,year,count)#spreads table2 by year and count
+
+#separate
+cows_with_breed <- cows %>% mutate(ID=c("1_A","2_A","3_B"))# edit cows table ID vector to add data to separate and assign. 
+cows_with_breed
+separate(cows_with_breed,col=ID, into=c("id","breed")) # returns the ID col separated in 2 cols, id and breed. 
+separate(cows_with_breed,col=ID, into=c("id","breed"),sep= "_")# uses sep to specify which character should be used to separate by
+separate(cows_with_breed,ID, c("id","breed"),"_") # will also work as it is in the correct syntax (expected position) for the function
